@@ -13,18 +13,6 @@ integer OFFSET_LAST_SEEN_ISO = 3;
 integer OFFSET_ID = 4;
 list visitors;
 
-string secondsToHMS(float aSeconds)
-{
-    integer value = (integer)aSeconds;
-    string hours = (string)(value / 3600);
-    string minutes = (string)((value / 60) % 60);
-    string seconds = (string)(value % 60);
-    while(llStringLength(hours) < 3) hours = "0" + hours;
-    while(llStringLength(minutes) < 2) minutes = "0" + minutes;
-    while(llStringLength(seconds) < 2) seconds = "0" + seconds;
-    return hours + ":" + minutes + ":" + seconds;
-}
-
 display(list values)
 {
     integer length = llGetListLength(values);
@@ -49,6 +37,14 @@ display(list values)
     }
 }
 
+do_it()
+{
+    rand_spin();
+    llOwnerSay(llGetTimestamp());
+    llOwnerSay(" - - - - REGION - - - - ");
+    region();
+}
+
 init()
 {
     me = llGetOwner();
@@ -62,62 +58,6 @@ float rand_omega()
 rand_spin()
 {
     llTargetOmega(<rand_omega(), rand_omega(), rand_omega()>, TWO_PI/(llFrand(30)+10), 1);
-}
-
-replace_visitor_time(integer index, integer count, float value)
-{
-    list before = llList2List(visitors, 0, index + OFFSET_LAST_SEEN_TIMESTAMP - 1);
-    list after = llList2List(visitors, index + OFFSET_LAST_SEEN_TIMESTAMP + 1, -1);
-    visitors = before + [value] + after;
-}
-
-update(key visitor, float current_time)
-{
-    integer count = llGetListLength(visitors);
-    integer index = 0;
-    key id;
-    while(index < count)
-    {
-        id = llList2Key(visitors, index + OFFSET_ID);
-        if(id == visitor)
-        {
-            replace_visitor_time(index, count, current_time);
-            return;
-        }
-        index += STRIDE;
-    }
-
-    visitors += [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor];
-}
-
-remove_visitor(integer index, integer count)
-{
-    list before = llList2List(visitors, 0, index-1);
-    list after = llList2List(visitors, index + STRIDE, -1);
-    if(index == 0)
-        visitors = after;
-    else if (index == count-STRIDE)
-        visitors = before;
-    else
-        visitors = before + after;
-}
-
-remove_stale(float current_time)
-{
-    integer count = llGetListLength(visitors);
-    integer index = 0;
-    float last_seen;
-    while(index < count)
-    {
-        last_seen = llList2Float(visitors, index+2);
-        if(last_seen < current_time)
-        {
-            remove_visitor(index, count);
-            count -= STRIDE;
-        }
-        else
-            index += STRIDE;
-    }
 }
 
 region()
@@ -146,14 +86,73 @@ region()
     remove_stale(current_time);
     display(visitors);
 }
-
-do_it()
+remove_stale(float current_time)
 {
-    rand_spin();
-    llOwnerSay(llGetTimestamp());
-    llOwnerSay(" - - - - REGION - - - - ");
-    region();
+    integer count = llGetListLength(visitors);
+    integer index = 0;
+    float last_seen;
+    while(index < count)
+    {
+        last_seen = llList2Float(visitors, index+2);
+        if(last_seen < current_time)
+        {
+            remove_visitor(index, count);
+            count -= STRIDE;
+        }
+        else
+            index += STRIDE;
+    }
 }
+remove_visitor(integer index, integer count)
+{
+    list before = llList2List(visitors, 0, index-1);
+    list after = llList2List(visitors, index + STRIDE, -1);
+    if(index == 0)
+        visitors = after;
+    else if (index == count-STRIDE)
+        visitors = before;
+    else
+        visitors = before + after;
+}
+
+replace_visitor_time(integer index, integer count, float value)
+{
+    list before = llList2List(visitors, 0, index + OFFSET_LAST_SEEN_TIMESTAMP - 1);
+    list after = llList2List(visitors, index + OFFSET_LAST_SEEN_TIMESTAMP + 1, -1);
+    visitors = before + [value] + after;
+}
+
+string secondsToHMS(float aSeconds)
+{
+    integer value = (integer)aSeconds;
+    string hours = (string)(value / 3600);
+    string minutes = (string)((value / 60) % 60);
+    string seconds = (string)(value % 60);
+    while(llStringLength(hours) < 3) hours = "0" + hours;
+    while(llStringLength(minutes) < 2) minutes = "0" + minutes;
+    while(llStringLength(seconds) < 2) seconds = "0" + seconds;
+    return hours + ":" + minutes + ":" + seconds;
+}
+
+update(key visitor, float current_time)
+{
+    integer count = llGetListLength(visitors);
+    integer index = 0;
+    key id;
+    while(index < count)
+    {
+        id = llList2Key(visitors, index + OFFSET_ID);
+        if(id == visitor)
+        {
+            replace_visitor_time(index, count, current_time);
+            return;
+        }
+        index += STRIDE;
+    }
+
+    visitors += [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor];
+}
+
 
 default
 {
