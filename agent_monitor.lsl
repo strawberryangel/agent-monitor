@@ -90,12 +90,16 @@ update(key visitor, float current_time)
     visitors += [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor];
 }
 
-remove_visitor(integer index)
+remove_visitor(integer index, integer count)
 {
+    list before = llList2List(visitors, 0, index-1);
+    list after = llList2List(visitors, index + STRIDE, -1);
     if(index == 0)
-        visitors = llList2List(visitors, STRIDE, -1);
+        visitors = after;
+    else if (index == count-STRIDE)
+        visitors = before;
     else
-        visitors = llList2List(visitors, 0, index-1) + llList2List(visitors, index + STRIDE, -1);
+        visitors = before + after;
 }
 
 remove_stale(float current_time)
@@ -108,10 +112,11 @@ remove_stale(float current_time)
         last_seen = llList2Float(visitors, index+2);
         if(last_seen < current_time)
         {
-            remove_visitor(index);
-            return;
+            remove_visitor(index, count);
+            count -= STRIDE;
         }
-        index += STRIDE;
+        else
+            index += STRIDE;
     }
 }
 
