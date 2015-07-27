@@ -12,6 +12,8 @@ integer OFFSET_LAST_SEEN_TIMESTAMP = 2;
 integer OFFSET_LAST_SEEN_ISO = 3;
 integer OFFSET_ID = 4;
 list visitors;
+list arrivals;
+list departures;
 
 display(list values)
 {
@@ -23,14 +25,18 @@ display(list values)
     key id;
     string duration;
     string from;
+    float delta;
 
     integer i=0;
     while(i < length)
     {
+        llOwnerSay("*** " + (string)i);
+        llOwnerSay("^^^ " + llList2CSV(values));
         from = llList2String(values, i + OFFSET_FIRST_SEEN_ISO);
-        float delta = currentTime - llList2Float(values, i + OFFSET_FIRST_SEEN_TIMESTAMP);
+        delta = currentTime - llList2Float(values, i + OFFSET_FIRST_SEEN_TIMESTAMP);
         duration = secondsToHMS(delta);
         id = llList2Key(values, i + OFFSET_ID);
+        llOwnerSay("%%% " + (string)id + llGetDisplayName(id) + " (" + llKey2Name(id) + ")");
         name = llGetDisplayName(id) + " (" + llKey2Name(id) + ")";
         llOwnerSay(duration + " " + name);
         i += STRIDE;
@@ -62,6 +68,9 @@ rand_spin()
 
 region()
 {
+    departures = [];
+    arrivals = [];
+
     list avatarsInRegion = llGetAgentList(AGENT_LIST_REGION, []);
     integer numOfAvatars = llGetListLength(avatarsInRegion);
 
@@ -83,9 +92,18 @@ region()
 
         update(id, current_time);
     }
+
     remove_stale(current_time);
+
+    llOwnerSay("CURRENT: " + (string)(llGetListLength(visitors)/STRIDE));
     display(visitors);
+    llOwnerSay("NEW: " + (string)(llGetListLength(arrivals)/STRIDE));
+    display(arrivals);
+    llOwnerSay("DEPARTED: " + (string)(llGetListLength(departures)/STRIDE));
+    llOwnerSay(">>>> list: " + llList2CSV(departures));
+    display(departures);
 }
+
 remove_stale(float current_time)
 {
     integer count = llGetListLength(visitors);
@@ -93,26 +111,32 @@ remove_stale(float current_time)
     float last_seen;
     while(index < count)
     {
-        last_seen = llList2Float(visitors, index+2);
+        last_seen = llList2Float(visitors, index + OFFSET_LAST_SEEN_TIMESTAMP);
         if(last_seen < current_time)
         {
-            remove_visitor(index, count);
+            // Remember this one.
+            list departure = llList2List(visitors, index, index + STRIDE - 1);
+            llOwnerSay("removing: " + llList2CSV(departure));
+            departures += departure;
+            llOwnerSay("list: " + llList2CSV(departures));
+
+            // Excise this one from visitors list.            
+            list before = llList2List(visitors, 0, index-1);
+            list after = llList2List(visitors, index + STRIDE, -1);
+            if(index == 0)
+                visitors = after;
+            else if (index == count-STRIDE)
+                visitors = before;
+            else
+                visitors = before + after;
+
+            // Keep the index the same but reduce count.
+            // The index now points to the next item.
             count -= STRIDE;
         }
         else
             index += STRIDE;
     }
-}
-remove_visitor(integer index, integer count)
-{
-    list before = llList2List(visitors, 0, index-1);
-    list after = llList2List(visitors, index + STRIDE, -1);
-    if(index == 0)
-        visitors = after;
-    else if (index == count-STRIDE)
-        visitors = before;
-    else
-        visitors = before + after;
 }
 
 replace_visitor_time(integer index, integer count, float value)
@@ -150,9 +174,10 @@ update(key visitor, float current_time)
         index += STRIDE;
     }
 
-    visitors += [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor];
+    list arrival = [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor];
+    arrivals += arrival;
+    visitors += arrival;
 }
-
 
 default
 {
