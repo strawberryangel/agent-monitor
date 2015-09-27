@@ -5,6 +5,7 @@ integer SCANNER_TIME_INTERVAL = 5;
 
 string COMMAND_CLEAR_ARRIVALS = "clear arrivals";
 string COMMAND_CLEAR_DEPARTURES = "clear departures";
+string COMMAND_DUMP_DEPARTURES = "dump departures";
 string COMMAND_DISABLE_ARRIVALS = "disable arrivals";
 string COMMAND_ENABLE_ARRIVALS = "enable arrivals";
 string COMMAND_LIST = "list";
@@ -45,6 +46,10 @@ command_disable_arrivals() {
     llOwnerSay("Arrivals disabled.");
 }
 
+command_dump_departures() {
+    llOwnerSay(">>>> list: " + llList2CSV(departures));
+}
+
 command_enable_arrivals() {
     enable_arrivals = TRUE;
     clear_arrivals();
@@ -64,7 +69,6 @@ command_list()
         clear_arrivals();
     }
     llOwnerSay("DEPARTED: " + (string)(llGetListLength(departures)/STRIDE));
-    //llOwnerSay(">>>> list: " + llList2CSV(departures));
     display(departures);
 }
 
@@ -80,14 +84,14 @@ display(list values)
     float currentTime = llGetGMTclock();
     string name;
     string duration;
-    string from;
     float delta;
+    float last_seen;
 
     integer i=0;
     while(i < length)
     {
-        from = llList2String(values, i + OFFSET_FIRST_SEEN_ISO);
-        delta = currentTime - llList2Float(values, i + OFFSET_FIRST_SEEN_TIMESTAMP);
+        last_seen = llList2Float(values, i + OFFSET_LAST_SEEN_TIMESTAMP);
+        delta = last_seen - llList2Float(values, i + OFFSET_FIRST_SEEN_TIMESTAMP);
         duration = secondsToHMS(delta);
         name = llList2String(values, i + OFFSET_DISPLAY_NAME) + " (" + llList2String(values, i + OFFSET_LOGIN_NAME) + ")";
         llOwnerSay(duration + " " + name);
@@ -229,6 +233,7 @@ default
         else if(message== COMMAND_STATUS) command_status();
         else if(message== COMMAND_CLEAR_ARRIVALS) clear_arrivals();
         else if(message== COMMAND_CLEAR_DEPARTURES) clear_departures();
+        else if(message== COMMAND_DUMP_DEPARTURES) command_dump_departures();
     }
     timer()
     {
