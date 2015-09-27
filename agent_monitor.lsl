@@ -1,19 +1,44 @@
 key me;
 
+integer CONTROL_CHANNEL = 8;
+integer SCANNER_TIME_INTERVAL = 5;
+
+string COMMAND_LIST = "liste";
+
 // First Seen timestamp
 // First Seen ISO-8601
 // Last Seen timestamp
 // Last Seen ISO-8601
 // UUID
-integer STRIDE = 5;
+// Login Name (This gets lost when they leave the region)
+// Display Name (This gets lost when they leave the region)
+integer STRIDE = 7;
 integer OFFSET_FIRST_SEEN_TIMESTAMP = 0;
 integer OFFSET_FIRST_SEEN_ISO = 1;
 integer OFFSET_LAST_SEEN_TIMESTAMP = 2;
 integer OFFSET_LAST_SEEN_ISO = 3;
 integer OFFSET_ID = 4;
+integer OFFSET_LOGIN_NAME = 5;
+integer OFFSET_DISPLAY_NAME = 6;
 list visitors;
 list arrivals;
 list departures;
+
+command_list()
+{
+    llOwnerSay(llGetTimestamp());
+    llOwnerSay(" - - - - REGION - - - - ");
+
+    llOwnerSay("CURRENT: " + (string)(llGetListLength(visitors)/STRIDE));
+    display(visitors);
+    llOwnerSay("NEW: " + (string)(llGetListLength(arrivals)/STRIDE));
+    display(arrivals);
+    llOwnerSay("DEPARTED: " + (string)(llGetListLength(departures)/STRIDE));
+    //llOwnerSay(">>>> list: " + llList2CSV(departures));
+    display(departures);
+    
+    arrivals = [];
+}
 
 display(list values)
 {
@@ -22,7 +47,6 @@ display(list values)
 
     float currentTime = llGetGMTclock();
     string name;
-    key id;
     string duration;
     string from;
     float delta;
@@ -30,14 +54,10 @@ display(list values)
     integer i=0;
     while(i < length)
     {
-        llOwnerSay("*** " + (string)i);
-        llOwnerSay("^^^ " + llList2CSV(values));
         from = llList2String(values, i + OFFSET_FIRST_SEEN_ISO);
         delta = currentTime - llList2Float(values, i + OFFSET_FIRST_SEEN_TIMESTAMP);
         duration = secondsToHMS(delta);
-        id = llList2Key(values, i + OFFSET_ID);
-        llOwnerSay("%%% " + (string)id + llGetDisplayName(id) + " (" + llKey2Name(id) + ")");
-        name = llGetDisplayName(id) + " (" + llKey2Name(id) + ")";
+        name = llList2String(values, i + OFFSET_DISPLAY_NAME) + " (" + llList2String(values, i + OFFSET_LOGIN_NAME) + ")";
         llOwnerSay(duration + " " + name);
         i += STRIDE;
     }
@@ -45,32 +65,20 @@ display(list values)
 
 do_it()
 {
-    rand_spin();
-    llOwnerSay(llGetTimestamp());
-    llOwnerSay(" - - - - REGION - - - - ");
     region();
+
+    // TODO: Clear departures
+    // departures = [];
 }
 
 init()
 {
     me = llGetOwner();
-}
-
-float rand_omega()
-{
-    return llFrand(20.0) - 10.0;
-}
-
-rand_spin()
-{
-    llTargetOmega(<rand_omega(), rand_omega(), rand_omega()>, TWO_PI/(llFrand(30)+10), 1);
+    llSetTimerEvent(SCANNER_TIME_INTERVAL);
 }
 
 region()
 {
-    departures = [];
-    arrivals = [];
-
     list avatarsInRegion = llGetAgentList(AGENT_LIST_REGION, []);
     integer numOfAvatars = llGetListLength(avatarsInRegion);
 
@@ -94,14 +102,6 @@ region()
     }
 
     remove_stale(current_time);
-
-    llOwnerSay("CURRENT: " + (string)(llGetListLength(visitors)/STRIDE));
-    display(visitors);
-    llOwnerSay("NEW: " + (string)(llGetListLength(arrivals)/STRIDE));
-    display(arrivals);
-    llOwnerSay("DEPARTED: " + (string)(llGetListLength(departures)/STRIDE));
-    llOwnerSay(">>>> list: " + llList2CSV(departures));
-    display(departures);
 }
 
 remove_stale(float current_time)
@@ -116,11 +116,11 @@ remove_stale(float current_time)
         {
             // Remember this one.
             list departure = llList2List(visitors, index, index + STRIDE - 1);
-            llOwnerSay("removing: " + llList2CSV(departure));
+            //llOwnerSay("removing: " + llList2CSV(departure));
             departures += departure;
-            llOwnerSay("list: " + llList2CSV(departures));
+            //llOwnerSay("list: " + llList2CSV(departures));
 
-            // Excise this one from visitors list.            
+            // Excise this one from visitors list.
             list before = llList2List(visitors, 0, index-1);
             list after = llList2List(visitors, index + STRIDE, -1);
             if(index == 0)
@@ -174,7 +174,7 @@ update(key visitor, float current_time)
         index += STRIDE;
     }
 
-    list arrival = [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor];
+    list arrival = [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor, llKey2Name(visitor), llGetDisplayName(visitor)];
     arrivals += arrival;
     visitors += arrival;
 }
@@ -184,13 +184,16 @@ default
     state_entry()
     {
         init();
-        llListen(7, "", NULL_KEY, "");
-    }
-    touch_end(integer total_number)
-    {
-        do_it();
+        llListen(CONTROL_CHANNEL, "", NULL_KEY, "");
+        llOwnerSay("Listening on channel " + (string)CONTROL_CHANNEL);
     }
     listen(integer channel, string name, key id, string message)
+    {
+        if(message == COMMAND_LIST) {
+            command_list();
+        }
+    }
+    timer()
     {
         do_it();
     }
