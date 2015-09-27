@@ -3,7 +3,14 @@ key me;
 integer CONTROL_CHANNEL = 8;
 integer SCANNER_TIME_INTERVAL = 5;
 
-string COMMAND_LIST = "liste";
+string COMMAND_CLEAR_ARRIVALS = "clear arrivals";
+string COMMAND_CLEAR_DEPARTURES = "clear departures";
+string COMMAND_DISABLE_ARRIVALS = "disable arrivals";
+string COMMAND_ENABLE_ARRIVALS = "enable arrivals";
+string COMMAND_LIST = "list";
+string COMMAND_STATUS = "status";
+
+integer enable_arrivals = FALSE;
 
 // First Seen timestamp
 // First Seen ISO-8601
@@ -24,6 +31,26 @@ list visitors;
 list arrivals;
 list departures;
 
+clear_arrivals() {
+    arrivals = [];
+}
+
+clear_departures() {
+    departures = [];
+}
+
+command_disable_arrivals() {
+    enable_arrivals = FALSE;
+    clear_arrivals();
+    llOwnerSay("Arrivals disabled.");
+}
+
+command_enable_arrivals() {
+    enable_arrivals = TRUE;
+    clear_arrivals();
+    llOwnerSay("Arrivals enabled.");
+}
+
 command_list()
 {
     llOwnerSay(llGetTimestamp());
@@ -31,13 +58,18 @@ command_list()
 
     llOwnerSay("CURRENT: " + (string)(llGetListLength(visitors)/STRIDE));
     display(visitors);
-    llOwnerSay("NEW: " + (string)(llGetListLength(arrivals)/STRIDE));
-    display(arrivals);
+    if(enable_arrivals) {
+        llOwnerSay("NEW: " + (string)(llGetListLength(arrivals)/STRIDE));
+        display(arrivals);
+        clear_arrivals();
+    }
     llOwnerSay("DEPARTED: " + (string)(llGetListLength(departures)/STRIDE));
     //llOwnerSay(">>>> list: " + llList2CSV(departures));
     display(departures);
-    
-    arrivals = [];
+}
+
+command_status() {
+    if(enable_arrivals) llOwnerSay("Arrivals enabled."); else llOwnerSay("Arrivals disabled.");
 }
 
 display(list values)
@@ -175,8 +207,10 @@ update(key visitor, float current_time)
     }
 
     list arrival = [current_time, llGetTimestamp(), current_time, llGetTimestamp(), visitor, llKey2Name(visitor), llGetDisplayName(visitor)];
-    arrivals += arrival;
     visitors += arrival;
+
+    // Tracking arrivals is useful for debugging.
+    if(enable_arrivals) arrivals += arrival;
 }
 
 default
@@ -189,9 +223,12 @@ default
     }
     listen(integer channel, string name, key id, string message)
     {
-        if(message == COMMAND_LIST) {
-            command_list();
-        }
+        if(message == COMMAND_LIST) command_list();
+        else if(message == COMMAND_DISABLE_ARRIVALS) command_disable_arrivals();
+        else if(message== COMMAND_ENABLE_ARRIVALS) command_enable_arrivals();
+        else if(message== COMMAND_STATUS) command_status();
+        else if(message== COMMAND_CLEAR_ARRIVALS) clear_arrivals();
+        else if(message== COMMAND_CLEAR_DEPARTURES) clear_departures();
     }
     timer()
     {
