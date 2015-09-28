@@ -44,25 +44,30 @@ list visitors;
 list arrivals;
 list departures;
 
-clear_arrivals() {
+clear_arrivals()
+{
     arrivals = [];
 }
 
-clear_departures() {
+clear_departures()
+{
     departures = [];
 }
 
-command_disable_arrivals() {
+command_disable_arrivals()
+{
     enable_arrivals = FALSE;
     clear_arrivals();
     llOwnerSay("Arrivals disabled.");
 }
 
-command_dump_departures() {
+command_dump_departures()
+{
     llOwnerSay(">>>> list: " + llList2CSV(departures));
 }
 
-command_enable_arrivals() {
+command_enable_arrivals()
+{
     enable_arrivals = TRUE;
     clear_arrivals();
     llOwnerSay("Arrivals enabled.");
@@ -84,7 +89,9 @@ command_list()
     display(departures);
 }
 
-command_status() {
+command_status()
+{
+    llOwnerSay("Current Status:");
     if(enable_arrivals) llOwnerSay("Arrivals enabled."); else llOwnerSay("Arrivals disabled.");
 }
 
