@@ -8,8 +8,20 @@ string COMMAND_CLEAR_DEPARTURES = "clear departures";
 string COMMAND_DUMP_DEPARTURES = "dump departures";
 string COMMAND_DISABLE_ARRIVALS = "disable arrivals";
 string COMMAND_ENABLE_ARRIVALS = "enable arrivals";
+string COMMAND_HELP = "help";
 string COMMAND_LIST = "list";
 string COMMAND_STATUS = "status";
+
+command_help() {
+    llOwnerSay(COMMAND_CLEAR_ARRIVALS);
+    llOwnerSay(COMMAND_CLEAR_DEPARTURES);
+    llOwnerSay(COMMAND_DUMP_DEPARTURES + ": CSV dump of the departures table.");
+    llOwnerSay(COMMAND_DISABLE_ARRIVALS);
+    llOwnerSay(COMMAND_ENABLE_ARRIVALS);
+    llOwnerSay(COMMAND_HELP);
+    llOwnerSay(COMMAND_LIST);
+    llOwnerSay(COMMAND_STATUS);
+}
 
 integer enable_arrivals = FALSE;
 
@@ -234,6 +246,7 @@ default
         else if(message== COMMAND_CLEAR_ARRIVALS) clear_arrivals();
         else if(message== COMMAND_CLEAR_DEPARTURES) clear_departures();
         else if(message== COMMAND_DUMP_DEPARTURES) command_dump_departures();
+        else if(message == COMMAND_HELP) command_help();
     }
     timer()
     {
