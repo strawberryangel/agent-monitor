@@ -130,6 +130,8 @@ init()
 {
     me = llGetOwner();
     llSetTimerEvent(SCANNER_TIME_INTERVAL);
+    llListen(CONTROL_CHANNEL, "", NULL_KEY, "");
+    llOwnerSay("Listening on channel " + (string)CONTROL_CHANNEL);
 }
 
 region()
@@ -241,8 +243,6 @@ default
     state_entry()
     {
         init();
-        llListen(CONTROL_CHANNEL, "", NULL_KEY, "");
-        llOwnerSay("Listening on channel " + (string)CONTROL_CHANNEL);
     }
     listen(integer channel, string name, key id, string message)
     {
