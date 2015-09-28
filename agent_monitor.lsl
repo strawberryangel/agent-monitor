@@ -147,6 +147,24 @@ init()
     llSetTimerEvent(SCANNER_TIME_INTERVAL);
     llListen(CONTROL_CHANNEL, "", NULL_KEY, "");
     llOwnerSay("Listening on channel " + (string)CONTROL_CHANNEL);
+process_command_line(string message)
+{
+    if(message == COMMAND_LIST) command_list();
+    else if(message == COMMAND_DISABLE_ARRIVALS) command_disable_arrivals();
+    else if(message== COMMAND_ENABLE_ARRIVALS) command_enable_arrivals();
+    else if(message== COMMAND_STATUS) command_status();
+    else if(message== COMMAND_CLEAR_ARRIVALS) {
+        clear_arrivals();
+        llOwnerSay("Arrivals cleared.");
+    }
+    else if(message== COMMAND_CLEAR_DEPARTURES) {
+        clear_departures();
+        llOwnerSay("Departures cleared.");
+    }
+    else if(message== COMMAND_DUMP_DEPARTURES) command_dump_departures();
+    else if(message == COMMAND_HELP) command_help();
+}
+
 }
 
 region()
@@ -261,20 +279,7 @@ default
     }
     listen(integer channel, string name, key id, string message)
     {
-        if(message == COMMAND_LIST) command_list();
-        else if(message == COMMAND_DISABLE_ARRIVALS) command_disable_arrivals();
-        else if(message== COMMAND_ENABLE_ARRIVALS) command_enable_arrivals();
-        else if(message== COMMAND_STATUS) command_status();
-        else if(message== COMMAND_CLEAR_ARRIVALS) {
-            clear_arrivals();
-            llOwnerSay("Arrivals cleared.");
-        }
-        else if(message== COMMAND_CLEAR_DEPARTURES) {
-            clear_departures();
-            llOwnerSay("Departures cleared.");
-        }
-        else if(message== COMMAND_DUMP_DEPARTURES) command_dump_departures();
-        else if(message == COMMAND_HELP) command_help();
+        if(channel == CONTROL_CHANNEL) process_command_line(message);
     }
     timer()
     {
