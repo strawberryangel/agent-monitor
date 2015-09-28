@@ -1,3 +1,18 @@
+// Shared information
+integer AGENT_MONITOR_CHANNEL = -38382938923;
+integer MESSENGER_CHANNEL = -9892837432;
+string COMMAND_DRL = "get departure request list";
+string RESPONSE_DRL = "[drl]";
+string DRL_SEPARATOR = "`";
+
+integer DRL_OFFSET_FIRST_SEEN_ISO = 0;
+integer DRL_OFFSET_LAST_SEEN_ISO = 1;
+integer DRL_OFFSET_ID = 2;
+integer DRL_OFFSET_LOGIN_NAME = 3;
+integer DRL_OFFSET_DISPLAY_NAME = 4;
+
+
+// Private information
 key me;
 
 integer CONTROL_CHANNEL = 8;
