@@ -250,8 +250,14 @@ default
         else if(message == COMMAND_DISABLE_ARRIVALS) command_disable_arrivals();
         else if(message== COMMAND_ENABLE_ARRIVALS) command_enable_arrivals();
         else if(message== COMMAND_STATUS) command_status();
-        else if(message== COMMAND_CLEAR_ARRIVALS) clear_arrivals();
-        else if(message== COMMAND_CLEAR_DEPARTURES) clear_departures();
+        else if(message== COMMAND_CLEAR_ARRIVALS) {
+            clear_arrivals();
+            llOwnerSay("Arrivals cleared.");
+        }
+        else if(message== COMMAND_CLEAR_DEPARTURES) {
+            clear_departures();
+            llOwnerSay("Departures cleared.");
+        }
         else if(message== COMMAND_DUMP_DEPARTURES) command_dump_departures();
         else if(message == COMMAND_HELP) command_help();
     }
