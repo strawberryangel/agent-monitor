@@ -144,9 +144,15 @@ do_it()
 init()
 {
     me = llGetOwner();
+    // Start monitor
     llSetTimerEvent(SCANNER_TIME_INTERVAL);
+    // Command line interface
     llListen(CONTROL_CHANNEL, "", NULL_KEY, "");
     llOwnerSay("Listening on channel " + (string)CONTROL_CHANNEL);
+    // Communication with message script
+    llListen(AGENT_MONITOR_CHANNEL, "", NULL_KEY, "");
+}
+
 process_command_line(string message)
 {
     if(message == COMMAND_LIST) command_list();
@@ -165,6 +171,17 @@ process_command_line(string message)
     else if(message == COMMAND_HELP) command_help();
 }
 
+process_messenger_requests(string message)
+{
+    integer length = llGetListLength(departures);
+    if(length == 0)
+    {
+        llSay(MESSENGER_CHANNEL, RESPONSE_DRL);
+        return;
+    }
+    // TODO: Remove item from top of departures list.
+    // TODO: Package item
+    // TODO: Send item
 }
 
 region()
@@ -280,6 +297,7 @@ default
     listen(integer channel, string name, key id, string message)
     {
         if(channel == CONTROL_CHANNEL) process_command_line(message);
+        if(channel == AGENT_MONITOR_CHANNEL) process_messenger_requests(message);
     }
     timer()
     {
