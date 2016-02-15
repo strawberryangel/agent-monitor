@@ -1,6 +1,6 @@
 // Shared information
-integer AGENT_MONITOR_CHANNEL = -38382938923;
-integer MESSENGER_CHANNEL = -9892837432;
+integer AGENT_MONITOR_CHANNEL = -38923;
+integer MESSENGER_CHANNEL = -9892;
 string COMMAND_DRL = "get departure request list";
 string RESPONSE_DRL = "[drl]";
 string DRL_SEPARATOR = "`";
@@ -173,10 +173,13 @@ process_command_line(string message)
 
 process_messenger_requests(string message)
 {
+    llOwnerSay("A: Received message - " + message);
+    return;
     integer length = llGetListLength(departures);
     if(length == 0)
     {
-        llSay(MESSENGER_CHANNEL, RESPONSE_DRL);
+        llOwnerSay("A: Responding to messenger.");
+        llMessageLinked(LINK_SET, MESSENGER_CHANNEL, RESPONSE_DRL, NULL_KEY);
         return;
     }
     // TODO: Remove item from top of departures list.
@@ -294,10 +297,15 @@ default
     {
         init();
     }
+    link_message(integer sender_number, integer number, string message, key id)
+    {
+        llOwnerSay("A: Received request - listen = " + (string)number + " - " + message);
+        return;
+        if(number == AGENT_MONITOR_CHANNEL) process_messenger_requests(message);        
+    }
     listen(integer channel, string name, key id, string message)
     {
         if(channel == CONTROL_CHANNEL) process_command_line(message);
-        if(channel == AGENT_MONITOR_CHANNEL) process_messenger_requests(message);
     }
     timer()
     {
